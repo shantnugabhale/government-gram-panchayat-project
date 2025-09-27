@@ -11,6 +11,8 @@ import {
   Link,
 } from "@mui/material";
 import "../styles/Auth.css";
+import { auth } from "../firebaseConfig.js"; // Corrected import path
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState("");
@@ -19,7 +21,18 @@ const LoginPage = ({ onLogin }) => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    onLogin(email, password); // Pass credentials up to App.jsx
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        onLogin(email, password);
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.error(errorCode, errorMessage);
+        alert(errorMessage);
+      });
   };
 
   return (
@@ -29,7 +42,7 @@ const LoginPage = ({ onLogin }) => {
           Gram Panchayat Website
         </Typography>
       </header>
-      
+
       <Box className="auth-content-wrapper">
         <Container component="main" maxWidth="xs">
           <Paper elevation={6} className="auth-paper">

@@ -1,9 +1,12 @@
-import React, { useState } from "react";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { Grid, Box, useMediaQuery } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
+import { Grid, Box, useMediaQuery, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { auth } from "./firebaseConfig.js";
 
-// --- General Components ---
+// --- Components ---
+import ProtectedRoute from "@/components/ProtectedRoute"; 
 import Navbar from "@/components/Navbar";
 import Photosection from "@/components/Photosection";
 import RajyaGeetSection from "@/components/RajyaGeetSection";
@@ -14,81 +17,78 @@ import DigitalSlogans from "@/components/DigitalSlogans";
 import GovLogosSection from "@/components/GovLogosSection";
 import Footer from "@/components/Footer";
 
-// --- Public-Facing Pages ---
+// --- Pages ---
 import LoginPage from "@/pages/Login";
 import RegistrationPage from "@/pages/Registration";
-import GrampanchayatMahiti from "@/pages/GrampanchayatMahiti";
-import GrampanchayatNaksha from "@/pages/GrampanchayatNaksha";
-import GrampanchayatSadasya from "@/pages/GrampanchayatSadasya";
-import GramsabhaNirnay from "@/pages/GramsabhaNirnay";
-import GramPuraskar from "@/pages/GramPuraskar";
-import Festival from "@/pages/Festival";
-import GramSuvidha from "@/pages/GramSuvidha";
-import Gramparyatansthale from "@/pages/Gramparyatansthale";
-import Gramjanganna from "@/pages/Gramjanganna";
-import GramDhurdhvani from "@/pages/GramDhurdhvani";
-import GramHelpline from "@/pages/GramHelpline";
-import GramRugnalay from "@/pages/GramRugnalay";
-import SwachhGav from "@/pages/SwachhGav";
-import Vikeltepikel from "@/pages/Vikeltepikel";
+// ... (Make sure to import all your other pages here)
 
-// --- Admin Panel Components ---
+// --- Admin ---
 import AdminLayout from '@/admin/pages/AdminLayout';
 import Dashboard from '@/admin/components/Dashboard';
-import GramPanchayatUpload from '@/admin/components/GramPanchayatUpload';
-import GramPanchayatManage from '@/admin/components/GramPanchayatManage';
-import UserManagement from '@/admin/components/UserManagement';
-import SubAdminManagement from '@/admin/components/SubAdminManagement';
-import AdminManagement from '@/admin/components/AdminManagement';
+// ... (Make sure to import all your other admin components here)
+
 
 function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navbarHeight = 64;
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if the current URL path is part of the admin panel
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const isAdminPanel = location.pathname.startsWith('/admin');
 
-  // Handles login logic and redirection
-  const handleLogin = (email, password) => {
-    setIsAuthenticated(true);
-    // In a real app, you would verify credentials and role from a backend API
-    if (email === "admin@example.com" && password === "password") {
-      navigate("/admin"); // Redirect admin users to the admin dashboard
+  const handleLogin = (email) => {
+    if (email === "admin@example.com") {
+      navigate("/admin");
     } else {
-      navigate("/"); // Redirect regular users to the public homepage
+      navigate("/");
     }
   };
 
-  // Handles logout logic and redirection
   const handleLogout = () => {
-    setIsAuthenticated(false);
-    navigate("/login");
+    signOut(auth).then(() => {
+      navigate("/login");
+    }).catch((error) => {
+      console.error("Logout Error:", error);
+    });
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <>
-      {/* Conditionally render the main Navbar and Footer */}
-      {isAuthenticated && !isAdminPanel && <Navbar onLogout={handleLogout} />}
-      
-      <Box sx={{ pt: isAuthenticated && !isAdminPanel ? `${navbarHeight}px` : 0 }}>
+      {user && !isAdminPanel && <Navbar onLogout={handleLogout} />}
+      <Box sx={{ pt: user && !isAdminPanel ? `${navbarHeight}px` : 0 }}>
         <Routes>
-          {/* --- Authentication Routes --- */}
-          <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-          <Route path="/register" element={<RegistrationPage />} />
+          {/* --- Auth Routes --- */}
+          <Route path="/login" element={!user ? <LoginPage onLogin={handleLogin} /> : <Navigate to="/" />} />
+          <Route path="/register" element={!user ? <RegistrationPage /> : <Navigate to="/" />} />
 
-          {/* --- Main Public Homepage Route --- */}
+          {/* --- Main Homepage Route --- */}
           <Route
             path="/"
             element={
-              isAuthenticated ? (
+              <ProtectedRoute user={user}>
                 <>
                   <Photosection />
                   <RajyaGeetSection />
-                  <Box sx={{ width: "100%", p: 0, m: 0 }}>
+                   <Box sx={{ width: "100%", p: 0, m: 0 }}>
                     <Grid container spacing={isMobile ? 2 : 4} sx={{ width: "100%", m: 0, p: 0 }}>
                       <Grid item xs={12} md={6} lg={5}>
                         <MessagesSection />
@@ -104,48 +104,28 @@ function App() {
                     <GovLogosSection />
                   </Box>
                 </>
-              ) : (
-                <LoginPage onLogin={handleLogin} />
-              )
+              </ProtectedRoute>
             }
           />
 
-          {/* --- Other Public Routes --- */}
-          <Route path="/ ग्रामपंचायत-माहिती" element={<GrampanchayatMahiti />} />
-          <Route path="/ ग्रामपंचायत-नकाशा" element={<GrampanchayatNaksha />} />
-          <Route path="/ ग्रामपंचायत-सदस्य" element={<GrampanchayatSadasya />} />
-          <Route path="/ ग्रामपंचायत-ग्रामसभेचे-निर्णय" element={<GramsabhaNirnay />} />
-          <Route path="/ ग्रामपंचायत-पुरस्कार" element={<GramPuraskar />} />
-          <Route path="/ ग्रामपंचायत-सण-उत्सव" element={<Festival />} />
-          <Route path="/ ग्रामपंचायत-सुविधा" element={<GramSuvidha />} />
-          <Route path="/ ग्रामपंचायत-पर्यटन-सथळे" element={<Gramparyatansthale />} />
-          <Route path="/निर्देशिका-जनगणना" element={<Gramjanganna />} />
-          <Route path="/निर्देशिका-दूरध्वनी-क्रमांक" element={<GramDhurdhvani />} />
-          <Route path="/निर्देशिका-हेल्पलाईन" element={<GramHelpline />} />
-          <Route path="/निर्देशिका-रुग्णालय" element={<GramRugnalay />} />
-          <Route path="/उपक्रम-स्वच्छ-गाव" element={<SwachhGav />} />
-          <Route path="/उपक्रम-विकेल-ते-पिकेल" element={<Vikeltepikel />} />
-          
-          {/* --- Admin Panel Routes (Nested under AdminLayout) --- */}
+          {/* --- Admin Panel Routes --- */}
           <Route
-            path="/admin"
-            element={isAuthenticated ? <AdminLayout onLogout={handleLogout} /> : <LoginPage onLogin={handleLogin} />}
-          >
-            <Route index element={<Dashboard />} /> 
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="upload-gp-details" element={<GramPanchayatUpload />} />
-            <Route path="manage-gp-details" element={<GramPanchayatManage />} />
-            <Route path="manage-users" element={<UserManagement />} />
-            <Route path="manage-sub-admins" element={<SubAdminManagement />} />
-            <Route path="manage-admins" element={<AdminManagement />} />
-          </Route>
+            path="/admin/*"
+            element={
+              <ProtectedRoute user={user}>
+                <AdminLayout onLogout={handleLogout} />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
+
         </Routes>
       </Box>
-
-      {isAuthenticated && !isAdminPanel && <Footer />}
+      {user && !isAdminPanel && <Footer />}
     </>
   );
 }
 
 export default App;
-

@@ -15,6 +15,8 @@ import {
   Link,
 } from "@mui/material";
 import "../styles/Auth.css";
+import { auth } from "../firebaseConfig.js"; // Corrected import path
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 // Mock data
 const districts = ["Mumbai", "Pune", "Nagpur", "Nashik"];
@@ -35,7 +37,7 @@ const RegistrationPage = () => {
   const [formData, setFormData] = useState({
     firstName: "", middleName: "", lastName: "",
     email: "", phone: "", aadhaar: "", district: "",
-    taluka: "", gramPanchayat: "",
+    taluka: "", gramPanchayat: "", password: ""
   });
   const [availableTalukas, setAvailableTalukas] = useState([]);
   const [availableGPs, setAvailableGPs] = useState([]);
@@ -62,9 +64,22 @@ const RegistrationPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Registration Data:", formData);
-    alert("Registration successful! Please login.");
-    navigate("/login");
+    createUserWithEmailAndPassword(auth, formData.email, formData.password)
+      .then((userCredential) => {
+        // Signed in 
+        const user = userCredential.user;
+        console.log("Registration Data:", formData);
+        alert("Registration successful! Please login.");
+        navigate("/login");
+        // ...
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.error(errorCode, errorMessage);
+        alert(errorMessage);
+        // ..
+      });
   };
 
   return (
@@ -90,6 +105,7 @@ const RegistrationPage = () => {
                 <Grid item xs={12} sm={4}><TextField name="middleName" fullWidth label="Middle Name" value={formData.middleName} onChange={handleChange} /></Grid>
                 <Grid item xs={12} sm={4}><TextField name="lastName" required fullWidth label="Last Name" value={formData.lastName} onChange={handleChange} /></Grid>
                 <Grid item xs={12}><TextField name="email" required fullWidth label="Email Address" type="email" value={formData.email} onChange={handleChange} /></Grid>
+                <Grid item xs={12}><TextField name="password" required fullWidth label="Password" type="password" value={formData.password} onChange={handleChange} /></Grid>
                 <Grid item xs={12} sm={6}><TextField name="phone" required fullWidth label="Phone Number" type="tel" value={formData.phone} onChange={handleChange} /></Grid>
                 <Grid item xs={12} sm={6}><TextField name="aadhaar" required fullWidth label="Aadhaar Card Number" value={formData.aadhaar} onChange={handleChange} /></Grid>
                 <Grid item xs={12} sm={6}>
