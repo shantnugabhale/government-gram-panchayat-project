@@ -9,29 +9,48 @@ import {
   Box,
   Grid,
   Link,
+  Alert,
 } from "@mui/material";
 import "../styles/Auth.css";
-import { auth } from "../firebaseConfig.js"; // Corrected import path
+import { auth } from "../firebaseConfig.js";
 import { signInWithEmailAndPassword } from "firebase/auth";
+
+const getLoginErrorMessage = (errorCode) => {
+  switch (errorCode) {
+    case "auth/invalid-credential":
+      return "Invalid email or password. Please try again.";
+    case "auth/invalid-email":
+      return "Invalid email address format.";
+    case "auth/user-disabled":
+      return "This user account has been disabled.";
+    case "auth/too-many-requests":
+      return "Access to this account has been temporarily disabled due to many failed login attempts. You can immediately restore it by resetting your password or you can try again later.";
+    case "auth/network-request-failed":
+      return "Network error. Please check your internet connection and try again.";
+    default:
+      return "An unexpected error occurred. Please try again.";
+  }
+};
 
 const LoginPage = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
-        // Signed in
         const user = userCredential.user;
         onLogin(email, password);
       })
       .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.error(errorCode, errorMessage);
-        alert(errorMessage);
+        // Log the actual error to the console for debugging
+        console.error("Firebase Login Error Code:", error.code);
+        const errorMessage = getLoginErrorMessage(error.code);
+        setError(errorMessage);
       });
   };
 
@@ -75,6 +94,7 @@ const LoginPage = ({ onLogin }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
               <Button
                 type="submit"
                 fullWidth
