@@ -145,7 +145,7 @@ const DropdownButton = ({ title, anchor, handleOpen, handleClose, items, parentN
 };
 
 // Mobile Menu Component
-const MobileMenu = ({ isOpen, onClose, navLinks, language, location }) => {
+const MobileMenu = ({ isOpen, onClose, navLinks, language, location, onLogout }) => {
   const [openDropdown, setOpenDropdown] = useState(null);
 
   if (!isOpen) return null;
@@ -162,7 +162,9 @@ const MobileMenu = ({ isOpen, onClose, navLinks, language, location }) => {
       zIndex: 2000,
       transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
       transition: 'transform 0.3s ease',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       <div style={{
         display: 'flex',
@@ -187,7 +189,7 @@ const MobileMenu = ({ isOpen, onClose, navLinks, language, location }) => {
         </button>
       </div>
 
-      <div style={{ padding: '20px 0' }}>
+      <div style={{ padding: '20px 0', flexGrow: 1 }}>
         {navLinks.map((link, i) => (
           <div key={i}>
             {link.dropdown ? (
@@ -255,12 +257,33 @@ const MobileMenu = ({ isOpen, onClose, navLinks, language, location }) => {
           </div>
         ))}
       </div>
+      
+      {/* --- Logout Button for Mobile Menu --- */}
+      <div style={{ padding: '20px', borderTop: '1px solid #ddd' }}>
+        <button
+          onClick={onLogout}
+          style={{
+            width: '100%',
+            padding: '12px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            color: 'white',
+            background: 'linear-gradient(45deg, #f44336, #d32f2f)',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(244, 67, 54, 0.3)'
+          }}
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 };
 
 // Main Navbar Component
-const Navbar = () => {
+const Navbar = ({ onLogout }) => {
   const [language, setLanguage] = useState("mr");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [grampanchayatAnchor, setGrampanchayatAnchor] = useState(null);
@@ -520,6 +543,35 @@ const Navbar = () => {
             >
               {language === "mr" ? "मराठी → English" : "English → मराठी"}
             </button>
+            
+            {/* --- Logout Button for Desktop --- */}
+            {!isMobile && onLogout && (
+              <button
+                onClick={onLogout}
+                style={{
+                  fontWeight: 'bold',
+                  color: 'white',
+                  background: 'linear-gradient(45deg, #f44336, #d32f2f)',
+                  border: '2px solid transparent',
+                  fontSize: '14px',
+                  padding: '8px 16px',
+                  borderRadius: '25px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 15px rgba(244, 67, 54, 0.3)'
+                }}
+                 onMouseEnter={(e) => {
+                    e.target.style.transform = 'scale(1.05) translateY(-2px)';
+                    e.target.style.boxShadow = '0 6px 20px rgba(244, 67, 54, 0.4)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.transform = 'scale(1) translateY(0)';
+                    e.target.style.boxShadow = '0 4px 15px rgba(244, 67, 54, 0.3)';
+                  }}
+              >
+                Logout
+              </button>
+            )}
 
             {/* Mobile Menu Button */}
             {isMobile && (
@@ -624,6 +676,7 @@ const Navbar = () => {
         navLinks={navLinks}
         language={language}
         location={location}
+        onLogout={onLogout}
       />
 
 

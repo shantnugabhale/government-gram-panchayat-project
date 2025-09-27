@@ -1,0 +1,87 @@
+/* --- Main Container Styling --- */
+.auth-container {
+  display: flex;
+  flex-direction: column; /* Stacks header and content vertically */
+  min-height: 100vh;
+  
+  background-image: url('https://images.indianexpress.com/2023/07/MAHA-ASSEMBLY-1.jpg?w=640');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.auth-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
+
+/* --- Header Styling (no longer absolute) --- */
+.auth-header {
+  position: relative; /* Changed from absolute */
+  z-index: 3;
+  padding: 1.5rem 2rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  width: 100%; /* Ensure it takes full width */
+}
+
+/* --- NEW: Wrapper to center the form in the remaining space --- */
+.auth-content-wrapper {
+  display: flex;
+  flex-grow: 1; /* This is key: it makes this div fill all available space */
+  align-items: center; /* This centers the form vertically */
+  justify-content: center; /* This centers the form horizontally */
+  padding: 1rem;
+  width: 100%;
+  z-index: 2;
+}
+
+
+/* --- Form Container Styling --- */
+.auth-paper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  width: 100%;
+  max-width: 450px;
+  padding: 2.5rem;
+  
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  /* REMOVED: margin-top: 100px; */
+}
+
+.registration-paper {
+  max-width: 1000px;
+}
+
+.auth-logo {
+  width: 70px;
+  margin-bottom: 1rem;
+}
+
+.auth-button {
+  margin-top: 1.5rem !important;
+  padding: 0.8rem;
+  background-color: #1e88e5;
+  color: white;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 14px 0 rgba(0, 118, 255, 0.39);
+}
+
+.auth-button:hover {
+  background-color: #1565c0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px 0 rgba(0, 118, 255, 0.23);
+}
