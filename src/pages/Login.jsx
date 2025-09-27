@@ -10,6 +10,7 @@ import {
   Grid,
   Link,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import "../styles/Auth.css";
 import { auth } from "../firebaseConfig.js";
@@ -32,25 +33,22 @@ const getLoginErrorMessage = (errorCode) => {
   }
 };
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false); // State for loading indicator
 
   const handleLogin = (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
+    setIsLoading(true); // Show loading spinner
     signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        onLogin(email, password);
-      })
       .catch((error) => {
-        // Log the actual error to the console for debugging
         console.error("Firebase Login Error Code:", error.code);
         const errorMessage = getLoginErrorMessage(error.code);
         setError(errorMessage);
+        setIsLoading(false); // Hide loading spinner on error
       });
   };
 
@@ -64,7 +62,26 @@ const LoginPage = ({ onLogin }) => {
 
       <Box className="auth-content-wrapper">
         <Container component="main" maxWidth="xs">
-          <Paper elevation={6} className="auth-paper">
+          <Paper elevation={6} className="auth-paper" sx={{ position: 'relative' }}>
+            {isLoading && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  zIndex: 2,
+                  borderRadius: '8px',
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            )}
             <img src="/satyamev.jpeg" alt="National Emblem" className="auth-logo" />
             <Typography component="h2" variant="h5" sx={{ fontWeight: 'bold' }}>
               User Login
@@ -81,6 +98,7 @@ const LoginPage = ({ onLogin }) => {
                 autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
               />
               <TextField
                 margin="normal"
@@ -93,6 +111,7 @@ const LoginPage = ({ onLogin }) => {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
               />
               {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
               <Button
@@ -100,6 +119,7 @@ const LoginPage = ({ onLogin }) => {
                 fullWidth
                 variant="contained"
                 className="auth-button"
+                disabled={isLoading}
               >
                 Sign In
               </Button>
