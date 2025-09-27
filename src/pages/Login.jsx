@@ -19,12 +19,7 @@ const LoginPage = ({ onLogin }) => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (email === "admin@example.com" && password === "password") {
-      onLogin();
-      navigate("/");
-    } else {
-      alert("Invalid credentials");
-    }
+    onLogin(email, password); // Pass credentials up to App.jsx
   };
 
   return (
@@ -34,8 +29,7 @@ const LoginPage = ({ onLogin }) => {
           Gram Panchayat Website
         </Typography>
       </header>
-
-      {/* New content wrapper for centering */}
+      
       <Box className="auth-content-wrapper">
         <Container component="main" maxWidth="xs">
           <Paper elevation={6} className="auth-paper">
