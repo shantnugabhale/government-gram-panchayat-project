@@ -3,54 +3,59 @@ import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-
 import { Grid, Box, useMediaQuery, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth, db } from "./firebaseConfig.js"; // Import db
-import { collection, query, where, getDocs } from "firebase/firestore"; // Import firestore functions
+import { auth, db } from "/src/firebaseConfig.js";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 // --- Components ---
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Navbar from "@/components/Navbar";
-import Photosection from "@/components/Photosection";
-import RajyaGeetSection from "@/components/RajyaGeetSection";
-import MessagesSection from "@/components/MessagesSection";
-import MembersSection from "@/components/MembersSection";
-import GrampanchayatInfo from "@/components/GrampanchayatInfo";
-import DigitalSlogans from "@/components/DigitalSlogans";
-import GovLogosSection from "@/components/GovLogosSection";
-import Footer from "@/components/Footer";
+import ProtectedRoute from "/src/components/ProtectedRoute.jsx";
+import Navbar from "/src/components/Navbar.jsx";
+import Photosection from "/src/components/Photosection.jsx";
+import RajyaGeetSection from "/src/components/RajyaGeetSection.jsx";
+import MessagesSection from "/src/components/MessagesSection.jsx";
+import MembersSection from "/src/components/MembersSection.jsx";
+import GrampanchayatInfo from "/src/components/GrampanchayatInfo.jsx";
+import DigitalSlogans from "/src/components/DigitalSlogans.jsx";
+import GovLogosSection from "/src/components/GovLogosSection.jsx";
+import Footer from "/src/components/Footer.jsx";
 
 // --- Pages ---
-import LoginPage from "@/pages/Login";
-import RegistrationPage from "@/pages/Registration";
-import GrampanchayatMahiti from "@/pages/GrampanchayatMahiti";
-import GrampanchayatNaksha from "@/pages/GrampanchayatNaksha";
-import GrampanchayatSadasya from "@/pages/GrampanchayatSadasya";
-import GramsabhaNirnay from "@/pages/GramsabhaNirnay";
-import GramPuraskar from "@/pages/GramPuraskar";
-import Festival from "@/pages/Festival";
-import GramSuvidha from "@/pages/GramSuvidha";
-import Gramparyatansthale from "@/pages/Gramparyatansthale";
-import Gramjanganna from "@/pages/Gramjanganna";
-import GramDhurdhvani from "@/pages/GramDhurdhvani";
-import GramHelpline from "@/pages/GramHelpline";
-import GramRugnalay from "@/pages/GramRugnalay";
-import SwachhGav from "@/pages/SwachhGav";
-import Vikeltepikel from "@/pages/Vikeltepikel";
+import LoginPage from "/src/pages/Login.jsx";
+import RegistrationPage from "/src/pages/Registration.jsx";
+import GrampanchayatMahiti from "/src/pages/GrampanchayatMahiti.jsx";
+import GrampanchayatNaksha from "/src/pages/GrampanchayatNaksha.jsx";
+import GrampanchayatSadasya from "/src/pages/GrampanchayatSadasya.jsx";
+import GramsabhaNirnay from "/src/pages/GramsabhaNirnay.jsx";
+import GramPuraskar from "/src/pages/GramPuraskar.jsx";
+import Festival from "/src/pages/Festival.jsx";
+import GramSuvidha from "/src/pages/GramSuvidha.jsx";
+import Gramparyatansthale from "/src/pages/Gramparyatansthale.jsx";
+import Gramjanganna from "/src/pages/Gramjanganna.jsx";
+import GramDhurdhvani from "/src/pages/GramDhurdhvani.jsx";
+import GramHelpline from "/src/pages/GramHelpline.jsx";
+import GramRugnalay from "/src/pages/GramRugnalay.jsx";
+import SwachhGav from "/src/pages/SwachhGav.jsx";
+import Vikeltepikel from "/src/pages/Vikeltepikel.jsx";
 
 // --- Admin ---
-import AdminLayout from '@/admin/pages/AdminLayout';
-import Dashboard from '@/admin/components/Dashboard';
-import AdminManagement from "@/admin/components/AdminManagement";
-import GramPanchayatManage from "@/admin/components/GramPanchayatManage";
-import GramPanchayatUpload from "@/admin/components/GramPanchayatUpload";
-import SubAdminManagement from "@/admin/components/SubAdminManagement";
-import UserManagement from "@/admin/components/UserManagement";
+import AdminLayout from '/src/admin/pages/AdminLayout.jsx';
+import Dashboard from '/src/admin/components/Dashboard.jsx';
+import AdminManagement from "/src/admin/components/AdminManagement.jsx";
+import GramPanchayatManage from "/src/admin/components/GramPanchayatManage.jsx";
+import GramPanchayatUpload from "/src/admin/components/GramPanchayatUpload.jsx";
+import SubAdminManagement from "/src/admin/components/SubAdminManagement.jsx";
+import UserManagement from "/src/admin/components/UserManagement.jsx";
+
+// --- Sub-Admin ---
+import SubAdminLayout from '/src/subadmin/SubAdminLayout.jsx';
+import SubAdminDashboard from '/src/subadmin/SubAdminDashboard.jsx';
+import SubAdminProfile from '/src/subadmin/SubAdminProfile.jsx';
 
 function App() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navbarHeight = 64;
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState(null); // 'admin', 'subadmin', or 'user'
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,27 +63,35 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Check if the user is an admin
+        // Check if the user is a super admin
         const adminsRef = collection(db, "admins");
-        const q = query(adminsRef, where("email", "==", currentUser.email));
-        const querySnapshot = await getDocs(q);
+        const adminQuery = query(adminsRef, where("email", "==", currentUser.email));
+        const adminQuerySnapshot = await getDocs(adminQuery);
 
-        if (!querySnapshot.empty) {
-          setIsAdmin(true);
+        if (!adminQuerySnapshot.empty) {
+            setUserRole('admin');
         } else {
-          setIsAdmin(false);
+            // Check if the user is a sub-admin
+            const subAdminsRef = collection(db, "subAdmins");
+            const subAdminQuery = query(subAdminsRef, where("email", "==", currentUser.email));
+            const subAdminQuerySnapshot = await getDocs(subAdminQuery);
+            if (!subAdminQuerySnapshot.empty) {
+                setUserRole('subadmin');
+            } else {
+                setUserRole('user');
+            }
         }
         setUser(currentUser);
       } else {
         setUser(null);
-        setIsAdmin(false);
+        setUserRole(null);
       }
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  const isAdminPanel = location.pathname.startsWith('/admin');
+  const isAdminPanel = location.pathname.startsWith('/admin') || location.pathname.startsWith('/subadmin');
 
   const handleLogout = () => {
     signOut(auth).then(() => {
@@ -96,13 +109,20 @@ function App() {
     );
   }
 
+  const getRedirectPath = () => {
+    if (!user) return "/login";
+    if (userRole === 'admin') return "/admin";
+    if (userRole === 'subadmin') return "/subadmin";
+    return "/";
+  };
+
   return (
     <>
       {user && !isAdminPanel && <Navbar onLogout={handleLogout} />}
       <Box sx={{ pt: user && !isAdminPanel ? `${navbarHeight}px` : 0 }}>
         <Routes>
           {/* --- Auth Routes --- */}
-          <Route path="/login" element={!user ? <LoginPage /> : (isAdmin ? <Navigate to="/admin" /> : <Navigate to="/" />)} />
+          <Route path="/login" element={!user ? <LoginPage /> : <Navigate to={getRedirectPath()} />} />
           <Route path="/register" element={!user ? <RegistrationPage /> : <Navigate to="/" />} />
 
           {/* --- Main Homepage Route --- */}
@@ -156,7 +176,7 @@ function App() {
 
           {/* --- Admin Panel Routes --- */}
           <Route
-            path="/admin"
+            path="/admin/*"
             element={
               <ProtectedRoute user={user}>
                 <AdminLayout onLogout={handleLogout} />
@@ -172,8 +192,24 @@ function App() {
             <Route path="manage-users" element={<UserManagement />} />
           </Route>
 
+            {/* --- Sub-Admin Panel Routes --- */}
+            <Route
+            path="/subadmin/*"
+            element={
+                <ProtectedRoute user={user}>
+                <SubAdminLayout onLogout={handleLogout} />
+                </ProtectedRoute>
+            }
+            >
+            <Route index element={<SubAdminDashboard />} />
+            <Route path="dashboard" element={<SubAdminDashboard />} />
+            <Route path="profile" element={<SubAdminProfile />} />
+            <Route path="manage-gp-details" element={<GramPanchayatManage />} />
+            <Route path="upload-gp-details" element={<GramPanchayatUpload />} />
+            </Route>
+
           {/* Fallback route */}
-          <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
+          <Route path="*" element={<Navigate to={getRedirectPath()} />} />
 
         </Routes>
       </Box>
@@ -183,3 +219,4 @@ function App() {
 }
 
 export default App;
+
