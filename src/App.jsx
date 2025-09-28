@@ -4,7 +4,7 @@ import { Grid, Box, useMediaQuery, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth, db } from "/src/firebaseConfig.js";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 
 // --- Components ---
 import ProtectedRoute from "/src/components/ProtectedRoute.jsx";
@@ -56,6 +56,7 @@ function App() {
   const navbarHeight = 64;
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null); // 'admin', 'subadmin', or 'user'
+  const [gramPanchayatName, setGramPanchayatName] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,28 +64,36 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // Check if the user is a super admin
+        setUser(currentUser);
+        // Check admins
         const adminsRef = collection(db, "admins");
         const adminQuery = query(adminsRef, where("email", "==", currentUser.email));
         const adminQuerySnapshot = await getDocs(adminQuery);
 
         if (!adminQuerySnapshot.empty) {
-            setUserRole('admin');
+          setUserRole('admin');
         } else {
-            // Check if the user is a sub-admin
-            const subAdminsRef = collection(db, "subAdmins");
-            const subAdminQuery = query(subAdminsRef, where("email", "==", currentUser.email));
-            const subAdminQuerySnapshot = await getDocs(subAdminQuery);
-            if (!subAdminQuerySnapshot.empty) {
-                setUserRole('subadmin');
-            } else {
-                setUserRole('user');
+          // Check sub-admins
+          const subAdminsRef = collection(db, "subAdmins");
+          const subAdminQuery = query(subAdminsRef, where("email", "==", currentUser.email));
+          const subAdminQuerySnapshot = await getDocs(subAdminQuery);
+
+          if (!subAdminQuerySnapshot.empty) {
+            setUserRole('subadmin');
+          } else {
+            // Check regular users
+            setUserRole('user');
+            const userDocRef = doc(db, "users", currentUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+              setGramPanchayatName(userDocSnap.data().gramPanchayat);
             }
+          }
         }
-        setUser(currentUser);
       } else {
         setUser(null);
         setUserRole(null);
+        setGramPanchayatName("");
       }
       setLoading(false);
     });
@@ -118,7 +127,7 @@ function App() {
 
   return (
     <>
-      {user && !isAdminPanel && <Navbar onLogout={handleLogout} />}
+      {user && !isAdminPanel && <Navbar onLogout={handleLogout} gramPanchayatName={gramPanchayatName} />}
       <Box sx={{ pt: user && !isAdminPanel ? `${navbarHeight}px` : 0 }}>
         <Routes>
           {/* --- Auth Routes --- */}
@@ -219,4 +228,3 @@ function App() {
 }
 
 export default App;
-

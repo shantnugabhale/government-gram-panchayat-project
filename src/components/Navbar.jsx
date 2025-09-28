@@ -283,7 +283,7 @@ const MobileMenu = ({ isOpen, onClose, navLinks, language, location, onLogout })
 };
 
 // Main Navbar Component
-const Navbar = ({ onLogout }) => {
+const Navbar = ({ onLogout, gramPanchayatName }) => {
   const [language, setLanguage] = useState("mr");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [grampanchayatAnchor, setGrampanchayatAnchor] = useState(null);
@@ -450,7 +450,7 @@ const Navbar = ({ onLogout }) => {
                 color: 'black',
                 margin: 0
               }}>
-                ग्रामपंचायत नाव
+                {gramPanchayatName || 'ग्रामपंचायत नाव'}
               </h1>
               <p style={{
                 fontSize: '12px',
@@ -678,8 +678,6 @@ const Navbar = ({ onLogout }) => {
         location={location}
         onLogout={onLogout}
       />
-
-
     </div>
   );
 };
