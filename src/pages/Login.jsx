@@ -13,8 +13,9 @@ import {
   CircularProgress,
 } from "@mui/material";
 import "../styles/Auth.css";
-import { auth } from "../firebaseConfig.js";
+import { auth, db } from "../firebaseConfig.js";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 const getLoginErrorMessage = (errorCode) => {
   switch (errorCode) {
@@ -37,20 +38,50 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // State for loading indicator
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true); // Show loading spinner
-    signInWithEmailAndPassword(auth, email, password)
-      .catch((error) => {
-        console.error("Firebase Login Error Code:", error.code);
-        const errorMessage = getLoginErrorMessage(error.code);
-        setError(errorMessage);
-        setIsLoading(false); // Hide loading spinner on error
-      });
+    setIsLoading(true);
+
+    try {
+      // Check for admin role first
+      const adminsRef = collection(db, "admins");
+      const adminQuery = query(adminsRef, where("email", "==", email));
+      const adminSnapshot = await getDocs(adminQuery);
+
+      if (!adminSnapshot.empty) {
+        await signInWithEmailAndPassword(auth, email, password);
+        navigate("/admin");
+        return;
+      }
+
+      // Check for sub-admin role
+      const subAdminsRef = collection(db, "subAdmins");
+      const subAdminQuery = query(subAdminsRef, where("email", "==", email));
+      const subAdminSnapshot = await getDocs(subAdminQuery);
+
+      if (!subAdminSnapshot.empty) {
+        await signInWithEmailAndPassword(auth, email, password);
+        navigate("/subadmin");
+        return;
+      }
+
+      // If not an admin or sub-admin, attempt a regular user login
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/");
+
+    } catch (error) {
+      console.error("Firebase Login Error Code:", error.code);
+      const errorMessage = getLoginErrorMessage(error.code);
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <Box className="auth-container">
